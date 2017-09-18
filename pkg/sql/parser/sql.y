@@ -2440,8 +2440,8 @@ pause_stmt:
 // %Help: CREATE TABLE - create a new table
 // %Category: DDL
 // %Text:
-// CREATE TABLE [IF NOT EXISTS] <tablename> ( <elements...> ) [<interleave>]
-// CREATE TABLE [IF NOT EXISTS] <tablename> [( <colnames...> )] AS <source>
+// CREATE [TEMP|TEMPORARY] TABLE [IF NOT EXISTS] <tablename> ( <elements...> ) [<interleave>]
+// CREATE [TEMP|TEMPORARY] TABLE [IF NOT EXISTS] <tablename> [( <colnames...> )] AS <source>
 //
 // Table elements:
 //    <name> <type> [<qualifiers...>]
@@ -2471,22 +2471,55 @@ pause_stmt:
 create_table_stmt:
   CREATE TABLE any_name '(' opt_table_elem_list ')' opt_interleave
   {
-    $$.val = &CreateTable{Table: $3.normalizableTableName(), IfNotExists: false, Interleave: $7.interleave(), Defs: $5.tblDefs(), AsSource: nil, AsColumnNames: nil}
+    $$.val = &CreateTable{Table: $3.normalizableTableName(), IfNotExists: false, IsTemp: false, Interleave: $7.interleave(), Defs: $5.tblDefs(), AsSource: nil, AsColumnNames: nil}
   }
 | CREATE TABLE IF NOT EXISTS any_name '(' opt_table_elem_list ')' opt_interleave
   {
-    $$.val = &CreateTable{Table: $6.normalizableTableName(), IfNotExists: true, Interleave: $10.interleave(), Defs: $8.tblDefs(), AsSource: nil, AsColumnNames: nil}
+    $$.val = &CreateTable{Table: $6.normalizableTableName(), IfNotExists: true, IsTemp: false, Interleave: $10.interleave(), Defs: $8.tblDefs(), AsSource: nil, AsColumnNames: nil}
   }
+| CREATE TEMP TABLE IF NOT EXISTS any_name '(' opt_table_elem_list ')' opt_interleave
+  {
+    $$.val = &CreateTable{Table: $7.normalizableTableName(), IfNotExists: true, IsTemp: true, Interleave: $11.interleave(), Defs: $9.tblDefs(), AsSource: nil, AsColumnNames: nil}
+  }
+| CREATE TEMPORARY TABLE IF NOT EXISTS any_name '(' opt_table_elem_list ')' opt_interleave
+  {
+    $$.val = &CreateTable{Table: $7.normalizableTableName(), IfNotExists: true, IsTemp: true, Interleave: $11.interleave(), Defs: $9.tblDefs(), AsSource: nil, AsColumnNames: nil}
+  }
+| CREATE TEMP TABLE any_name '(' opt_table_elem_list ')' opt_interleave
+  {
+    $$.val = &CreateTable{Table: $4.normalizableTableName(), IfNotExists: false, IsTemp: true, Interleave: $8.interleave(), Defs: $6.tblDefs(), AsSource: nil, AsColumnNames: nil}
+  }  
+| CREATE TEMPORARY TABLE any_name '(' opt_table_elem_list ')' opt_interleave
+  {
+    $$.val = &CreateTable{Table: $4.normalizableTableName(), IfNotExists: false, IsTemp: true, Interleave: $8.interleave(), Defs: $6.tblDefs(), AsSource: nil, AsColumnNames: nil}
+  }  
+
 
 create_table_as_stmt:
   CREATE TABLE any_name opt_column_list AS select_stmt
   {
-    $$.val = &CreateTable{Table: $3.normalizableTableName(), IfNotExists: false, Interleave: nil, Defs: nil, AsSource: $6.slct(), AsColumnNames: $4.nameList()}
+    $$.val = &CreateTable{Table: $3.normalizableTableName(), IfNotExists: false, IsTemp: false, Interleave: nil, Defs: nil, AsSource: $6.slct(), AsColumnNames: $4.nameList()}
   }
 | CREATE TABLE IF NOT EXISTS any_name opt_column_list AS select_stmt
   {
-    $$.val = &CreateTable{Table: $6.normalizableTableName(), IfNotExists: true, Interleave: nil, Defs: nil, AsSource: $9.slct(), AsColumnNames: $7.nameList()}
+    $$.val = &CreateTable{Table: $6.normalizableTableName(), IfNotExists: true, IsTemp: false, Interleave: nil, Defs: nil, AsSource: $9.slct(), AsColumnNames: $7.nameList()}
   }
+| CREATE TEMP TABLE IF NOT EXISTS any_name opt_column_list AS select_stmt
+  {
+    $$.val = &CreateTable{Table: $7.normalizableTableName(), IfNotExists: true, IsTemp: true, Interleave: nil, Defs: nil, AsSource: $10.slct(), AsColumnNames: $8.nameList()}
+  }
+| CREATE TEMPORARY TABLE IF NOT EXISTS any_name opt_column_list AS select_stmt
+  {
+    $$.val = &CreateTable{Table: $7.normalizableTableName(), IfNotExists: true, IsTemp: true, Interleave: nil, Defs: nil, AsSource: $10.slct(), AsColumnNames: $8.nameList()}
+  }
+| CREATE TEMP TABLE any_name opt_column_list AS select_stmt
+  {
+    $$.val = &CreateTable{Table: $4.normalizableTableName(), IfNotExists: false, IsTemp: true, Interleave: nil, Defs: nil, AsSource: $7.slct(), AsColumnNames: $5.nameList()}
+  }    
+| CREATE TEMPORARY TABLE any_name opt_column_list AS select_stmt
+  {
+    $$.val = &CreateTable{Table: $4.normalizableTableName(), IfNotExists: false, IsTemp: true, Interleave: nil, Defs: nil, AsSource: $7.slct(), AsColumnNames: $5.nameList()}
+  }    
 
 opt_table_elem_list:
   table_elem_list

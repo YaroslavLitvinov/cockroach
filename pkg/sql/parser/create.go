@@ -639,6 +639,7 @@ func (node *InterleaveDef) Format(buf *bytes.Buffer, f FmtFlags) {
 // CreateTable represents a CREATE TABLE statement.
 type CreateTable struct {
 	IfNotExists   bool
+	IsTemp        bool
 	Table         NormalizableTableName
 	Interleave    *InterleaveDef
 	Defs          TableDefs
@@ -654,7 +655,11 @@ func (node *CreateTable) As() bool {
 
 // Format implements the NodeFormatter interface.
 func (node *CreateTable) Format(buf *bytes.Buffer, f FmtFlags) {
-	buf.WriteString("CREATE TABLE ")
+	buf.WriteString("CREATE ")
+	if node.IsTemp {
+		buf.WriteString("TEMP ")
+	}
+	buf.WriteString("TABLE ")
 	if node.IfNotExists {
 		buf.WriteString("IF NOT EXISTS ")
 	}

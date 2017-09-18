@@ -47,10 +47,17 @@ func TestDisableTableLeases() func() {
 type tableKey struct {
 	parentID sqlbase.ID
 	name     string
+	//isTemp    bool
+	//sessionid uint64 //TODO: find sessionid size
 }
 
 func (tk tableKey) Key() roachpb.Key {
+	//if tk.isTemp {
+	//	temp_table_internal_name := fmt.Sprintf("%u.%s", tk.sessionid, tk.name)
+	//	return sqlbase.MakeNameMetadataKey(tk.parentID, temp_table_internal_name)
+	//} else {
 	return sqlbase.MakeNameMetadataKey(tk.parentID, tk.name)
+	//}
 }
 
 func (tk tableKey) Name() string {

@@ -432,3 +432,26 @@ SELECT * FROM t.kv%d
 		}
 	}
 }
+
+// Test temp table creation
+func TestTempTableCreation(t *testing.T) {
+	defer leaktest.AfterTest(t)()
+	params, _ := createTestServerParams()
+	s, sqlDB, _ := serverutils.StartServer(t, params)
+	defer s.Stopper().Stop(context.TODO())
+
+	if _, err := sqlDB.Exec(`
+CREATE DATABASE t;
+CREATE TEMP TABLE t.a (k CHAR PRIMARY KEY, v CHAR);
+`); err != nil {
+		t.Fatal(err)
+	}
+
+	// create another TEMP table in different session
+	if _, err := sqlDB.Exec(`
+USE t;
+CREATE TEMPORARY TABLE a (k CHAR PRIMARY KEY, v CHAR);
+`); err != nil {
+		t.Fatal(err)
+	}
+}
